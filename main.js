@@ -50,7 +50,7 @@ let target_zoom_center = [0.0, 0.0];
 let zoom_size = 4.0;
 let stop_zooming = true;
 let zoom_factor = 1.0;
-const max_iterations = 500;
+const max_iterations = 384;
 
 function renderFrame() {
   /* bind inputs & render frame */

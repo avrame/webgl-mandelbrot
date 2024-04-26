@@ -2,8 +2,8 @@ body {
   margin: 0;
 }
 
-canvas {
-  width: 100vw;
-  height: 100vh;
+main {
+  width: 800px;
   display: block;
+  margin: 0 auto;
 }
