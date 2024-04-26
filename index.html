@@ -1,14 +1,95 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebGL Mandelbrot</title>
-    <script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js"></script>
-  </head>
-  <body>
-    <canvas id="canvas"></canvas>
-    <script type="module" src="/main.js"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebGL Mandelbrot</title>
+  <script src="https://webgl2fundamentals.org/webgl/resources/webgl-utils.js"></script>
+
+  <script id="shader-vs" type="x-shader/x-vertex">
+      precision highp float;
+      attribute vec2 a_Position;
+      void main() {
+        gl_Position = vec4(a_Position.x, a_Position.y, 0.0, 1.0);
+      }
+  </script>
+
+  <script id="shader-fs" type="x-shader/x-fragment">
+      precision highp float;
+
+      uniform vec2 u_zoomCenter;
+      uniform float u_zoomSize;
+      uniform int u_maxIterations;
+
+      vec2 f(vec2 x, vec2 c) {
+      	return mat2(x,-x.y,x.x)*x + c;
+      }
+
+      float hue_to_rgb(float p, float q, float t) {
+        if (t < 0.0) {
+          t += 1.0;
+        }
+        if (t > 1.0) {
+          t -= 1.0;
+        }
+        if (t < 1.0/6.0) {
+          return p + (q - p) * 6.0 * t;
+        }
+        if (t < 1.0/2.0) {
+          return q;
+        }
+        if (t < 2.0/3.0) {
+          return p + (q - p) * (2.0/3.0 - t) * 6.0;
+        }
+        return p;
+      }
+
+      vec4 hsl_to_rgb(float h, float s, float l) {
+        vec3 rgb = vec3(0.0, 0.0, 0.0);
+        if (s == 0.0) {
+          rgb = vec3(l);
+        } else {
+          float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
+          float p = 2.0 * l - q;
+          rgb = vec3(
+            hue_to_rgb(p, q, h + 1.0/3.0),
+            hue_to_rgb(p, q, h),
+            hue_to_rgb(p, q, h - 1.0/3.0)
+          );
+        }
+        return vec4(rgb, 1.0);
+      }
+
+      void main() {
+        vec2 uv = gl_FragCoord.xy / vec2(800.0, 800.0);
+        vec2 c = u_zoomCenter + (uv * 4.0 - vec2(2.0)) * (u_zoomSize / 4.0);
+        vec2 x = vec2(0.0);
+        bool escaped = false;
+        int iterations = 0;
+        for (int i = 0; i < 10000; i++) {
+          if (i > u_maxIterations) break;
+          iterations = i;
+          x = f(x, c);
+          if (length(x) > 2.0) {
+            escaped = true;
+            break;
+          }
+        }
+        gl_FragColor = escaped
+          ? hsl_to_rgb(float(iterations)/float(u_maxIterations), 0.75, 0.5)
+          //? vec4(0.5, 0.5, 0.5, 1)
+          : vec4(0, 0, 0, 1);
+      }
+  </script>
+
+  <script type="module" src="/main.js"></script>
+</head>
+
+<body>
+  <p>Left click to zoom in, right click to zoom out.</p>
+  <canvas id="maincanvas" width="800" height="800">canvas not supported</canvas>
+</body>
+
 </html>
